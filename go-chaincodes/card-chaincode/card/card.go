@@ -1,0 +1,131 @@
+package card
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric/protos/peer"
+)
+
+// Card structure with 3 properties. Structure tags are used by encoding/json library
+type Card struct {
+	ObjectType    string `json:"docType"`
+	CardNumber    int    `json:"cardNumber"`
+	AccountNumber string `json:"accountNumber"`
+}
+
+/*
+ * ============================================================
+ * toChaincodeArgs - prepares function arguments to invoke
+ * params: args
+ * ============================================================
+ */
+func toChaincodeArgs(args ...string) [][]byte {
+	bargs := make([][]byte, len(args))
+	for i, arg := range args {
+		bargs[i] = []byte(arg)
+	}
+	return bargs
+}
+
+/*
+ * ============================================================
+ * CreateCard - creates new card and stores into chaincode state
+ * params: cardNumber, AccountNumber
+ * ============================================================
+ */
+func CreateCard(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("-- Starting CreateCard")
+
+	// Input sanitation
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. 2 are expected!")
+	}
+	if len(args[0]) <= 0 {
+		return shim.Error("1st argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return shim.Error("2nd argument must be a non-empty string")
+	}
+
+	// Mapping args to variables
+	cardNumber, err := strconv.Atoi(args[0])
+	if err != nil {
+		return shim.Error("1st argument must be a numeric string")
+	}
+	accountNumber, err := strconv.Atoi(args[1])
+	if err != nil {
+		return shim.Error("2nd argument must be a numeric string")
+	}
+	cardNumberStr := strconv.Itoa(cardNumber)
+
+	// Check if it already exists
+	cardAsBytes, err := stub.GetState("CARD" + cardNumberStr)
+	if err != nil {
+		return shim.Error("Failed to get card data: " + err.Error())
+	} else if cardAsBytes != nil {
+		return shim.Error("This card already exists: " + cardNumberStr)
+	}
+
+	// Check if account exists
+	chaincodeName := "cc-account"
+	queryArgs := toChaincodeArgs("GetAccountByNumber", strconv.Itoa(accountNumber))
+	channelName := ""
+	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
+	if response.Status != shim.OK {
+		return shim.Error("Error: Check if the account number is valid!")
+	}
+
+	// Create card object and marshal to JSON
+	objectType := "Card"
+	card := &Card{objectType, cardNumber, strconv.Itoa(accountNumber)}
+	cardJSONasBytes, err := json.Marshal(card)
+	if response.Status != shim.OK {
+		msg := string(response.Payload[:])
+		return shim.Error(msg)
+	}
+
+	// Save card to state
+	err = stub.PutState("CARD"+cardNumberStr, cardJSONasBytes)
+	if err != nil {
+		return shim.Error("Error inserting card: " + err.Error())
+	}
+
+	// Card saved and indexed. Return success
+	fmt.Println("-- Ending CreateCard")
+	return shim.Success([]byte("Card created!"))
+}
+
+/*
+ * ============================================================
+ * GetCardByNumber - Performs a query based on card number
+ * param: CardNumber
+ * ============================================================
+ */
+func GetCardByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("-- Starting GetCardByNumber")
+	var err error
+
+	// Input sanitation
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. 1 are expected!")
+	}
+
+	// Mapping arg to variable
+	cardNumber := args[0]
+
+	// Get card state and check if it exists
+	cardAsJSON, err := stub.GetState("CARD" + cardNumber)
+	if err != nil {
+		jsonResp := "{\"Error\":\"Fail to get state of accout: " + cardNumber + "\"}"
+		return shim.Error(jsonResp)
+	} else if cardAsJSON == nil {
+		jsonResp := "{\"Error\":\"card " + cardNumber + " does not exist!\"}"
+		return shim.Error(jsonResp)
+	}
+
+	fmt.Println("-- Ending GetCardByNumber")
+	return shim.Success(cardAsJSON)
+}

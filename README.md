@@ -67,30 +67,40 @@ Where the first argument is the function name, the second is the unique account 
 
 To create a predefined set of accounts:
 
-	peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["InitAccounts"]}'
+	peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Init"]}'
 
-To query an account by account number:
+To query an account by its number:
 
-	peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetAccountByNumber","1"]}'
+	peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByNumber","1"]}'
+
+To delete an account by its number:
+
+    peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Delete","1"]}'
+
+To get a history for an account by its number:
+
+    peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
+
 
 <h2>Card chaincode</h2>
 To create a card:
 
-	peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["CreateCard","10","1"]}'
+	peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["Create","10","1"]}'
 
 Where the first argument is the function name, the second is the card number and the last one is the existent account number related to the new card.
 
-To query a card by the card number:
+To query a card by its number:
 
-	peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetCardByNumber","10"]}'
+	peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetByNumber","10"]}'
 
 <h2>Transfer chaincode</h2>
 To transfer money from one account to another:
 
-	peer chaincode invoke -C mychannel -n cc-transfer -c '{"Args":["TransferMoney","1","2","500"]}'
+	peer chaincode invoke -C mychannel -n cc-transfer -c '{"Args":["Money","1","2","500"]}'
 
 Where the first argument is the function name, the second is the payer account number, the second is the receiver account number and the last one is the money amount to be transfered.
 
+<h2> Other instructions </h2>
 If you want to edit the code and test, you should use the cli again to install on the peer the edited chaincode and upgrade the network with the chaincode new version number. For example, if the account chaincode is modified:
 
 	peer chaincode install -n cc-account -p github.com/go-chaincodes/account-chaincode -v v2

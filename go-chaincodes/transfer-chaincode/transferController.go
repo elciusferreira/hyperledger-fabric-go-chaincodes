@@ -4,7 +4,7 @@ peer chaincode install -n cc-transfer -p github.com/go-chaincodes/transfer-chain
 peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-transfer -c '{"Args":["init"]}' -v v1
 peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-transfer -c '{"Args":["init"]}' -v v2
 
-peer chaincode invoke -C mychannel -n cc-transfer -c '{"Args":["TransferMoney","1","2","500"]}'
+peer chaincode invoke -C mychannel -n cc-transfer -c '{"Args":["Money","1","2","500"]}'
 
 */
 package main
@@ -12,7 +12,7 @@ package main
 import (
 	"fmt"
 
-	tr "github.com/go-chaincodes/transfer-chaincode/transfer"
+	"github.com/go-chaincodes/transfer-chaincode/transfer"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
@@ -22,11 +22,7 @@ import (
 type TransferController struct {
 }
 
-/*
- * ============================================================
- *  Main
- * ============================================================
- */
+//  Main
 func main() {
 	err := shim.Start(new(TransferController))
 	if err != nil {
@@ -34,28 +30,20 @@ func main() {
 	}
 }
 
-/*
- * ============================================================
- * Init - initializes chaincode
- * ============================================================
- */
+// Init - initializes chaincode
 func (t *TransferController) Init(stub shim.ChaincodeStubInterface) peer.Response {
 	return shim.Success(nil)
 }
 
-/*
- * ============================================================
- * Invoke - Entry point for Invocations
- * ============================================================
- */
+// Invoke - Entry point for Invocations
 func (t *TransferController) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 	function, args := stub.GetFunctionAndParameters()
 	fmt.Println("Transfer Invoke is running " + function)
 
 	// Handle different functions
 	switch function {
-	case "TransferMoney":
-		return tr.TransferMoney(stub, args)
+	case "Money":
+		return transfer.Money(stub, args)
 	default:
 		// error
 		return shim.Error("Received unknown function invocation on Transfer Chaincode")

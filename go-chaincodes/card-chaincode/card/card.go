@@ -16,12 +16,8 @@ type Card struct {
 	AccountNumber string `json:"accountNumber"`
 }
 
-/*
- * ============================================================
- * toChaincodeArgs - prepares function arguments to invoke
- * params: args
- * ============================================================
- */
+// toChaincodeArgs - prepares function arguments to invoke
+// params: args
 func toChaincodeArgs(args ...string) [][]byte {
 	bargs := make([][]byte, len(args))
 	for i, arg := range args {
@@ -30,14 +26,10 @@ func toChaincodeArgs(args ...string) [][]byte {
 	return bargs
 }
 
-/*
- * ============================================================
- * CreateCard - creates new card and stores into chaincode state
- * params: cardNumber, AccountNumber
- * ============================================================
- */
-func CreateCard(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	fmt.Println("-- Starting CreateCard")
+// Create - creates new card and stores into chaincode state
+// params: cardNumber, AccountNumber
+func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("-- Starting card Create")
 
 	// Input sanitation
 	if len(args) != 2 {
@@ -71,7 +63,7 @@ func CreateCard(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Check if account exists
 	chaincodeName := "cc-account"
-	queryArgs := toChaincodeArgs("GetAccountByNumber", strconv.Itoa(accountNumber))
+	queryArgs := toChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
 	channelName := ""
 	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
@@ -94,18 +86,14 @@ func CreateCard(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	// Card saved and indexed. Return success
-	fmt.Println("-- Ending CreateCard")
+	fmt.Println("-- Ending card Create")
 	return shim.Success([]byte("Card created!"))
 }
 
-/*
- * ============================================================
- * GetCardByNumber - Performs a query based on card number
- * param: CardNumber
- * ============================================================
- */
-func GetCardByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	fmt.Println("-- Starting GetCardByNumber")
+// GetByNumber - Performs a query based on card number
+// param: CardNumber
+func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("-- Starting card GetByNumber")
 	var err error
 
 	// Input sanitation

@@ -15,6 +15,8 @@ peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByNumber","1"]}
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Delete","1"]}'
 
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
+
+peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["GetByOwner","Elcius"]}'
 */
 
 package main
@@ -32,7 +34,7 @@ import (
 type AccountsChaincode struct {
 }
 
-// Main
+//  Main
 func main() {
 	err := shim.Start(new(AccountsChaincode))
 	if err != nil {
@@ -58,6 +60,8 @@ func (t *AccountsChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Respon
 		return account.Create(stub, args)
 	case "GetByNumber":
 		return account.GetByNumber(stub, args)
+	case "GetByOwner":
+		return account.GetByOwner(stub, args)
 	case "UpdateByNumber":
 		return account.UpdateByNumber(stub, args)
 	case "Delete":
@@ -65,7 +69,7 @@ func (t *AccountsChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Respon
 	case "GetHistory":
 		return account.GetHistory(stub, args)
 	default:
-		// error
+		// Error
 		return shim.Error("Received unknown function invocation on Account Chaincode")
 	}
 }

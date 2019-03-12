@@ -33,32 +33,32 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Input sanitation
 	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. 2 are expected!")
+		return shim.Error("Error: Incorrect number of arguments. 2 are expected!")
 	}
 	if len(args[0]) <= 0 {
-		return shim.Error("1st argument must be a non-empty string")
+		return shim.Error("Error: 1st argument must be a non-empty string")
 	}
 	if len(args[1]) <= 0 {
-		return shim.Error("2nd argument must be a non-empty string")
+		return shim.Error("Error: 2nd argument must be a non-empty string")
 	}
 
 	// Mapping args to variables
 	cardNumber, err := strconv.Atoi(args[0])
 	if err != nil {
-		return shim.Error("1st argument must be a numeric string")
+		return shim.Error("Error: 1st argument must be a numeric string")
 	}
 	accountNumber, err := strconv.Atoi(args[1])
 	if err != nil {
-		return shim.Error("2nd argument must be a numeric string")
+		return shim.Error("Error: 2nd argument must be a numeric string")
 	}
 	cardNumberStr := strconv.Itoa(cardNumber)
 
 	// Check if it already exists
 	cardAsBytes, err := stub.GetState("CARD" + cardNumberStr)
 	if err != nil {
-		return shim.Error("Failed to get card data: " + err.Error())
+		return shim.Error("Error: Failed to get card data: " + err.Error())
 	} else if cardAsBytes != nil {
-		return shim.Error("This card already exists: " + cardNumberStr)
+		return shim.Error("Error: This card already exists: " + cardNumberStr)
 	}
 
 	// Check if account exists
@@ -67,7 +67,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	channelName := ""
 	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
-		return shim.Error("Error: Check if the account number is valid!")
+		return shim.Error("Error: Check if the chaincode name or the function name and parameters or account number are valid in InvokeChaincode!")
 	}
 
 	// Create card object and marshal to JSON
@@ -82,7 +82,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	// Save card to state
 	err = stub.PutState("CARD"+cardNumberStr, cardJSONasBytes)
 	if err != nil {
-		return shim.Error("Error inserting card: " + err.Error())
+		return shim.Error("Error: Could not put state of card: " + err.Error())
 	}
 
 	// Card saved and indexed. Return success
@@ -98,7 +98,7 @@ func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response 
 
 	// Input sanitation
 	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. 1 are expected!")
+		return shim.Error("Error: Incorrect number of arguments. 1 are expected!")
 	}
 
 	// Mapping arg to variable
@@ -107,11 +107,9 @@ func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response 
 	// Get card state and check if it exists
 	cardAsJSON, err := stub.GetState("CARD" + cardNumber)
 	if err != nil {
-		jsonResp := "{\"Error\":\"Fail to get state of accout: " + cardNumber + "\"}"
-		return shim.Error(jsonResp)
+		return shim.Error("Error: Failed to get state of account: " + cardNumber)
 	} else if cardAsJSON == nil {
-		jsonResp := "{\"Error\":\"card " + cardNumber + " does not exist!\"}"
-		return shim.Error(jsonResp)
+		return shim.Error("Error: Card " + cardNumber + " does not exist!")
 	}
 
 	fmt.Println("-- Ending GetCardByNumber")

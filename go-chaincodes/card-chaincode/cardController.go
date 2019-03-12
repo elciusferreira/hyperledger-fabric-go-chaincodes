@@ -8,7 +8,7 @@ peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{
 ==== Cards ====
 peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["Create","10","1"]}'
 
-peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetCardByNumber","10"]}'
+peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetByNumber","10"]}'
 */
 package main
 
@@ -25,7 +25,7 @@ import (
 type CardChaincode struct {
 }
 
-// Main
+//  Main
 func main() {
 	err := shim.Start(new(CardChaincode))
 	if err != nil {
@@ -47,10 +47,10 @@ func (t *CardChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 	switch function {
 	case "Create":
 		return card.Create(stub, args)
-	case "GetCardByNumber":
+	case "GetByNumber":
 		return card.GetByNumber(stub, args)
 	default:
-		// error
+		// Error
 		return shim.Error("Received unknown function invocation on Card Chaincode")
 	}
 }

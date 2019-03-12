@@ -30,35 +30,35 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Input sanitation
 	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. 3 are expected!")
+		return shim.Error("Error: Incorrect number of arguments. 3 are expected!")
 	}
 	if len(args[0]) <= 0 {
-		return shim.Error("1st argument must be a non-empty string")
+		return shim.Error("Error: 1st argument must be a non-empty string")
 	}
 	if len(args[1]) <= 0 {
-		return shim.Error("2nd argument must be a non-empty string")
+		return shim.Error("Error: 2nd argument must be a non-empty string")
 	}
 	if len(args[2]) <= 0 {
-		return shim.Error("3rd argument must be a non-empty string")
+		return shim.Error("Error: 3rd argument must be a non-empty string")
 	}
 	if args[0] == args[1] {
-		return shim.Error("The transfer must be between different accounts")
+		return shim.Error("Error: The transfer must be between different accounts")
 	}
 
 	// Mapping args to variables
 	payerAccNumber, err := strconv.Atoi(args[0])
 	if err != nil {
-		return shim.Error("1st argument must be a numeric string")
+		return shim.Error("Error: 1st argument must be a numeric string")
 	}
 
 	receiverAccNumber, err := strconv.Atoi(args[1])
 	if err != nil {
-		return shim.Error("2nd argument must be a numeric string")
+		return shim.Error("Error: 2nd argument must be a numeric string")
 	}
 
 	value, err := strconv.Atoi(args[2])
 	if err != nil {
-		return shim.Error("3rd argument must be a numeric string")
+		return shim.Error("Error: 3rd argument must be a numeric string")
 	}
 
 	// Get payer account
@@ -84,19 +84,19 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	payerAcc := account.Account{}
 	err = json.Unmarshal([]byte(payerAccAsString), &payerAcc)
 	if err != nil {
-		return shim.Error("Failed to parse payer account JSON: " + err.Error())
+		return shim.Error("Error: Failed to parse payer Account JSON: " + err.Error())
 	}
 
 	// Check payer Account accBalance
 	if payerAcc.AccountBalance < value {
-		return shim.Error("Payer has insuffient money. Current account balance: " + strconv.Itoa(payerAcc.AccountBalance))
+		return shim.Error("Error: Payer has insuffient money. Current account balance: " + strconv.Itoa(payerAcc.AccountBalance))
 	}
 
 	// Parse receiver Account to Account object
 	receiverAcc := account.Account{}
 	err = json.Unmarshal([]byte(receiverAccAsString), &receiverAcc)
 	if err != nil {
-		return shim.Error("Failed to parse receiver account JSON: " + err.Error())
+		return shim.Error("Error: Failed to parse receiver Account JSON: " + err.Error())
 	}
 
 	// Transfer money
@@ -106,11 +106,11 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	// Parse Accounts back to JSON
 	payerAccAsBytes, err := json.Marshal(payerAcc)
 	if err != nil {
-		return shim.Error("Failed to parse payer account object: " + err.Error())
+		return shim.Error("Error: Failed to parse payer Account object: " + err.Error())
 	}
 	receiverAccAsBytes, err := json.Marshal(receiverAcc)
 	if err != nil {
-		return shim.Error("Failed to parse receiver account object: " + err.Error())
+		return shim.Error("Error: Failed to parse receiver Account object: " + err.Error())
 	}
 
 	// Update payer Account
@@ -126,7 +126,7 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	queryArgs = toChaincodeArgs("UpdateByNumber", strconv.Itoa(receiverAccNumber), receiverAccAsString)
 	response = stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
-		return shim.Error("Error: Could not update receiver account!")
+		return shim.Error("Error: Could not receiver payer account!")
 	}
 
 	fmt.Println("-- Ending TransferMoney")

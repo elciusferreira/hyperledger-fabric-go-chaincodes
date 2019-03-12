@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/go-chaincodes/utils/qryutils"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
@@ -22,8 +23,8 @@ type Account struct {
 func Init(stub shim.ChaincodeStubInterface) peer.Response {
 	fmt.Println("-- Starting account Init")
 
-	TxID := stub.GetTxID()
-	fmt.Println("Transaction ID:", TxID)
+	txID := stub.GetTxID()
+	fmt.Println("Transaction ID:", txID)
 
 	accounts := []Account{
 		Account{ObjectType: "Account", AccountNumber: 1, AccountBalance: 1000, AccountOwner: "Elcius"},
@@ -42,7 +43,7 @@ func Init(stub shim.ChaincodeStubInterface) peer.Response {
 		fmt.Println("ACC" + strconv.Itoa(i+1))
 		err = stub.PutState("ACC"+strconv.Itoa(i+1), accountsAsBytes)
 		if err != nil {
-			return shim.Error("Error inserting accounts: " + err.Error())
+			return shim.Error("Error: Failed to put state of accounts: " + err.Error())
 		}
 
 		fmt.Println("Added", accounts[i])
@@ -63,37 +64,37 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Input sanitation
 	if len(args) != 3 {
-		return shim.Error("Incorrect number of arguments. 3 are expected!")
+		return shim.Error("Error: Incorrect number of arguments. 3 are expected!")
 	}
 	if len(args[0]) <= 0 {
-		return shim.Error("1st argument must be a non-empty string")
+		return shim.Error("Error: 1st argument must be a non-empty string")
 	}
 	if len(args[1]) <= 0 {
-		return shim.Error("2nd argument must be a non-empty string")
+		return shim.Error("Error: 2nd argument must be a non-empty string")
 	}
 	if len(args[2]) <= 0 {
-		return shim.Error("3rd argument must be a non-empty string")
+		return shim.Error("Error: 3rd argument must be a non-empty string")
 	}
 
 	// Mapping args to variables
 	accNumber, err := strconv.Atoi(args[0])
 	if err != nil {
-		return shim.Error("1st argument must be a numeric string")
+		return shim.Error("Error: 1st argument must be a numeric string")
 	}
 	accNumberAsStr := args[0]
 
 	accBalance, err := strconv.Atoi(args[1])
 	if err != nil {
-		return shim.Error("2nd argument must be a numeric string")
+		return shim.Error("Error: 2nd argument must be a numeric string")
 	}
 	accOwner := args[2]
 
 	// Get Account state and check if it already exists
 	AccountAsBytes, err := stub.GetState("ACC" + accNumberAsStr)
 	if err != nil {
-		return shim.Error("Failed to get Account data: " + err.Error())
+		return shim.Error("Error: Failed to get Account data: " + err.Error())
 	} else if AccountAsBytes != nil {
-		return shim.Error("This Account already exists: " + accNumberAsStr)
+		return shim.Error("Error: This Account already exists: " + accNumberAsStr)
 	}
 
 	// Create Account object and marshal to JSON
@@ -104,7 +105,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	// Save Account to state
 	err = stub.PutState("ACC"+strconv.Itoa(accNumber), accountJSONasBytes)
 	if err != nil {
-		return shim.Error("Error inserting account: " + err.Error())
+		return shim.Error("Error: Failed to put state of account: " + err.Error())
 	}
 
 	// Account saved and indexed. Return success
@@ -120,7 +121,7 @@ func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response 
 
 	// Input sanitation
 	if len(args) != 1 {
-		return shim.Error("GetAccountByNumber: Incorrect number of arguments. 1 are expected!")
+		return shim.Error("Incorrect number of arguments. 1 are expected!")
 	}
 
 	// Mapping arg to variable
@@ -128,15 +129,43 @@ func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response 
 
 	// Get Account state and check if it exists
 	accountAsBytes, err := stub.GetState("ACC" + accNumber)
-	fmt.Println(accountAsBytes)
 	if err != nil {
-		return shim.Error("GetAccountByNumber: Fail to get state of account: " + accNumber)
+		return shim.Error("Error: Fail to get state of account: " + accNumber)
 	} else if accountAsBytes == nil {
-		return shim.Error("GetAccountByNumber: Account " + accNumber + " does not exist!")
+		return shim.Error("Error: Account " + accNumber + " does not exist!")
 	}
 
 	fmt.Println("-- Ending account GetByNumber")
 	return shim.Success(accountAsBytes)
+}
+
+// GetByOwner - Queries account by the owner name
+// param: accountOwner
+func GetByOwner(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("-- Starting account GetByOwner")
+
+	// Input sanitation
+	if len(args) < 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+	if args[0] == "" {
+		return shim.Error("Error: Argument must be a non-empty string")
+	}
+
+	// Mapping arg to variable
+	accOwner := args[0]
+
+	// Construct query string using account owner name
+	queryString := fmt.Sprintf("{\"selector\":{\"docType\":\"Account\",\"accountOwner\":\"%s\"}}", accOwner)
+
+	// Use package qryutils to query couchdb and format the result
+	queryResults, status := qryutils.GetQueryResultForQueryString(stub, queryString)
+	if status != "SUCCESS" {
+		return shim.Error(status)
+	}
+
+	fmt.Println("-- Ending account GetByOwner")
+	return shim.Success([]byte(queryResults))
 }
 
 // UpdateByNumber - Updates (rewrites) an account
@@ -146,15 +175,18 @@ func UpdateByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Respon
 	var err error
 
 	// Input sanitation
+	if len(args) < 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
 	if args[0] == "" {
-		return shim.Error("UpdateByNumber error: 1st argument must be a non-empty string")
+		return shim.Error("Error: 1st argument must be a non-empty string")
 	}
 	if args[1] == "" {
-		return shim.Error("UpdateByNumber error: 2nd argument must be a non-empty string")
+		return shim.Error("Error: 2nd argument must be a non-empty string")
 	}
 	_, err = strconv.Atoi(args[0])
 	if err != nil {
-		return shim.Error("UpdateByNumber error: 1st argument must be a numeric string")
+		return shim.Error("Error: 1st argument must be a numeric string")
 	}
 
 	// Mapping arg to variable
@@ -180,11 +212,11 @@ func Delete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Input sanitation
 	if args[0] == "" {
-		return shim.Error("DeleteAccount error: 1st argument must be a non-empty string")
+		return shim.Error("Error: 1st argument must be a non-empty string")
 	}
 	_, err = strconv.Atoi(args[0])
 	if err != nil {
-		return shim.Error("DeleteAccount error: 1st argument must be a numeric string")
+		return shim.Error("Error: 1st argument must be a numeric string")
 	}
 
 	// Mapping arg to variable
@@ -193,15 +225,15 @@ func Delete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	// Get Account state and check if it exists
 	accountAsBytes, err := stub.GetState("ACC" + accNumber)
 	if err != nil {
-		return shim.Error("GetAccountByNumber: Fail to get state of account: " + accNumber)
+		return shim.Error("Error: Fail to get state of account: " + accNumber)
 	} else if accountAsBytes == nil {
-		return shim.Error("GetAccountByNumber: Account " + accNumber + " does not exist!")
+		return shim.Error("Error: Account " + accNumber + " does not exist!")
 	}
 
 	// Remove the account from chaincode state
 	err = stub.DelState("ACC" + accNumber)
 	if err != nil {
-		return shim.Error("Failed to delete state:" + err.Error())
+		return shim.Error("Error: Failed to delete state:" + err.Error())
 	}
 
 	fmt.Println("-- Ending account Delete")
@@ -217,11 +249,11 @@ func GetHistory(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Input sanitation
 	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
+		return shim.Error("Error: Incorrect number of arguments. Expecting 1")
 	}
 	_, err = strconv.Atoi(args[0])
 	if err != nil {
-		return shim.Error("1st argument must be a numeric string")
+		return shim.Error("Error: 1st argument must be a numeric string")
 	}
 
 	// Mapping arg to variable
@@ -241,7 +273,7 @@ func GetHistory(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	// Get History
 	resultsIterator, err := stub.GetHistoryForKey("ACC" + accNumber)
 	if err != nil {
-		return shim.Error("Failed to get history: " + err.Error())
+		return shim.Error("Error: Failed to get history: " + err.Error())
 	}
 	defer resultsIterator.Close()
 
@@ -250,7 +282,7 @@ func GetHistory(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		for resultsIterator.HasNext() {
 			historyData, err := resultsIterator.Next()
 			if err != nil {
-				return shim.Error("Failed to iterate over results: " + err.Error())
+				return shim.Error("Error: Failed to iterate over results: " + err.Error())
 			}
 
 			var tx AuditHistory
@@ -276,7 +308,7 @@ func GetHistory(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 			history = append(history, tx)
 		}
 	} else {
-		return shim.Error("Failed to find history. Account " + accNumber + " does not exist!")
+		return shim.Error("Error: Failed to find history. Account " + accNumber + " does not exist!")
 	}
 
 	// Parse history list to array of bytes

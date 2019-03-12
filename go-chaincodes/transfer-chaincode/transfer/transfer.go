@@ -6,20 +6,11 @@ import (
 	"strconv"
 
 	"github.com/go-chaincodes/account-chaincode/account"
+	"github.com/go-chaincodes/utils/argsutils"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
-
-// toChaincodeArgs - Prepares function arguments to invoke
-// params: args
-func toChaincodeArgs(args ...string) [][]byte {
-	bargs := make([][]byte, len(args))
-	for i, arg := range args {
-		bargs[i] = []byte(arg)
-	}
-	return bargs
-}
 
 // Money - Transfer money between Accounts
 // param: AccountNumber, AccountNumber, Value
@@ -63,7 +54,7 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Get payer account
 	chaincodeName := "cc-account"
-	queryArgs := toChaincodeArgs("GetByNumber", strconv.Itoa(payerAccNumber))
+	queryArgs := argsutils.ToChaincodeArgs("GetByNumber", strconv.Itoa(payerAccNumber))
 	channelName := ""
 	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
@@ -73,7 +64,7 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	payerAccAsString := string(response.Payload[:])
 
 	// Get receiver Account
-	queryArgs = toChaincodeArgs("GetByNumber", strconv.Itoa(receiverAccNumber))
+	queryArgs = argsutils.ToChaincodeArgs("GetByNumber", strconv.Itoa(receiverAccNumber))
 	response = stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
 		return shim.Error("Error: Check if the account number is valid!")
@@ -115,7 +106,7 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Update payer Account
 	payerAccAsString = string(payerAccAsBytes[:])
-	queryArgs = toChaincodeArgs("UpdateByNumber", strconv.Itoa(payerAccNumber), payerAccAsString)
+	queryArgs = argsutils.ToChaincodeArgs("UpdateByNumber", strconv.Itoa(payerAccNumber), payerAccAsString)
 	response = stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
 		return shim.Error("Error: Could not update payer account!")
@@ -123,7 +114,7 @@ func Money(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Update receiver Account
 	receiverAccAsString = string(receiverAccAsBytes[:])
-	queryArgs = toChaincodeArgs("UpdateByNumber", strconv.Itoa(receiverAccNumber), receiverAccAsString)
+	queryArgs = argsutils.ToChaincodeArgs("UpdateByNumber", strconv.Itoa(receiverAccNumber), receiverAccAsString)
 	response = stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
 		return shim.Error("Error: Could not receiver payer account!")

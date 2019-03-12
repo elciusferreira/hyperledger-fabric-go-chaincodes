@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/go-chaincodes/utils/argsutils"
+
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
@@ -14,16 +16,6 @@ type Card struct {
 	ObjectType    string `json:"docType"`
 	CardNumber    int    `json:"cardNumber"`
 	AccountNumber string `json:"accountNumber"`
-}
-
-// toChaincodeArgs - prepares function arguments to invoke
-// params: args
-func toChaincodeArgs(args ...string) [][]byte {
-	bargs := make([][]byte, len(args))
-	for i, arg := range args {
-		bargs[i] = []byte(arg)
-	}
-	return bargs
 }
 
 // Create - creates new card and stores into chaincode state
@@ -63,7 +55,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Check if account exists
 	chaincodeName := "cc-account"
-	queryArgs := toChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
+	queryArgs := argsutils.ToChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
 	channelName := ""
 	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {

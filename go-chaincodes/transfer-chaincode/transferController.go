@@ -4,6 +4,7 @@ peer chaincode install -n cc-transfer -p github.com/go-chaincodes/transfer-chain
 peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-transfer -c '{"Args":["init"]}' -v v1
 peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-transfer -c '{"Args":["init"]}' -v v2
 
+-- Invoke
 peer chaincode invoke -C mychannel -n cc-transfer -c '{"Args":["Money","1","2","500"]}'
 
 */

@@ -1,3 +1,6 @@
+/*
+Package account provides services in the context of account asset.
+*/
 package account
 
 import (
@@ -5,7 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-chaincodes/utils/qryutils"
+	"github.com/go-chaincodes/utils/query"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
@@ -158,14 +161,14 @@ func GetByOwner(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	// Construct query string using account owner name
 	queryString := fmt.Sprintf("{\"selector\":{\"docType\":\"Account\",\"accountOwner\":\"%s\"}}", accOwner)
 
-	// Use package qryutils to query couchdb and format the result
-	queryResults, status := qryutils.GetQueryResultForQueryString(stub, queryString)
+	// Use package query to query couchdb and format the result
+	queryResults, status := query.GetQueryResultForQueryString(stub, queryString)
 	if status != "SUCCESS" {
 		return shim.Error(status)
 	}
 
 	fmt.Println("-- Ending account GetByOwner")
-	return shim.Success([]byte(queryResults))
+	return shim.Success(queryResults)
 }
 
 // UpdateByNumber - Updates (rewrites) an account

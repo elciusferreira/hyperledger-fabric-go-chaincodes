@@ -6,8 +6,10 @@ peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{
 
 
 ==== Cards ====
+-- Invoke
 peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["Create","10","1"]}'
 
+-- Query
 peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetByNumber","10"]}'
 */
 package main

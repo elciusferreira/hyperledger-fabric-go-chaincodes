@@ -6,17 +6,19 @@ peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c
 
 
 ==== Accounts ====
+-- Invokes
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Init"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","1","1000","Elcius"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","2","1000","Natan"]}'
 
-peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByNumber","1"]}'
-
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Delete","1"]}'
 
-peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
+-- Queries
+peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByNumber","1"]}'
 
-peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["GetByOwner","Elcius"]}'
+peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
+
+peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByOwner","Elcius"]}'
 */
 
 package main

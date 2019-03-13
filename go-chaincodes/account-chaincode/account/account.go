@@ -168,7 +168,7 @@ func GetByOwner(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	fmt.Println("-- Ending account GetByOwner")
-	return shim.Success(queryResults)
+	return shim.Success([]byte(queryResults))
 }
 
 // UpdateByNumber - Updates (rewrites) an account

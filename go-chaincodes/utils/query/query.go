@@ -51,7 +51,7 @@ func constructQueryResponseFromIterator(resultsIterator shim.StateQueryIteratorI
 
 // GetQueryResultForQueryString - Executes the passed in query string.
 // Result set is built and returned as a byte array containing the JSON results.
-func GetQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString string) ([]byte, string) {
+func GetQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString string) (string, string) {
 	fmt.Printf("- Starting query GetQueryResultForQueryString queryString:\n%s\n", queryString)
 
 	var b *bytes.Buffer
@@ -76,5 +76,5 @@ func GetQueryResultForQueryString(stub shim.ChaincodeStubInterface, queryString 
 	}
 
 	fmt.Printf("- Ending query GetQueryResultForQueryString queryResult:\n%s\n", b.String())
-	return b.Bytes(), "SUCCESS"
+	return b.String(), "SUCCESS"
 }

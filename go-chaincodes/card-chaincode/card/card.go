@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-chaincodes/utils/arg"
-
+	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
@@ -58,7 +57,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Check if account exists
 	chaincodeName := "cc-account"
-	queryArgs := arg.ToChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
+	queryArgs := util.ToChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
 	channelName := ""
 	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {

@@ -1,24 +1,25 @@
 /*
 ==== Install/Instantiate/Upgrade
-peer chaincode install -n cc-account -p github.com/go-chaincodes/account-chaincode -v v1
-peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v1
-peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v2
+peer chaincode install -n cc-account -p github.com/go-chaincodes/account-chaincode -v v1.0.0
+peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v1.0.0
+peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v1.0.1
 
+==== List chaincodes ====
+peer chaincode list --installed
+peer chaincode list --instantiated -C mychannel
 
 ==== Accounts ====
--- Invokes
++++ Invokes
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Init"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","1","1000","Elcius"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","2","1000","Natan"]}'
-
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Delete","1"]}'
 
--- Queries
++++ Queries
 peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByNumber","1"]}'
-
 peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
-
 peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByOwner","Elcius"]}'
+peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetAll"]}'
 */
 
 package main
@@ -36,7 +37,7 @@ import (
 type AccountsChaincode struct {
 }
 
-//  Main
+// Main
 func main() {
 	err := shim.Start(new(AccountsChaincode))
 	if err != nil {
@@ -60,6 +61,8 @@ func (t *AccountsChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Respon
 		return account.Init(stub)
 	case "Create":
 		return account.Create(stub, args)
+	case "GetAll":
+		return account.GetAll(stub, args)
 	case "GetByNumber":
 		return account.GetByNumber(stub, args)
 	case "GetByOwner":

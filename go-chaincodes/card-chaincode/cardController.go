@@ -1,17 +1,18 @@
 /*
 ==== Install/Instantiate/Upgrade
-peer chaincode install -n cc-card -p github.com/go-chaincodes/card-chaincode -v v1
-peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1
-peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v2
-
+peer chaincode install -n cc-card -p github.com/go-chaincodes/card-chaincode -v v1.0.0
+peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1.0.0
+peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1.0.1
 
 ==== Cards ====
--- Invoke
++++ Invokes
 peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["Create","10","1"]}'
 
--- Query
++++ Queries
 peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetByNumber","10"]}'
+peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetAll"]}'
 */
+
 package main
 
 import (
@@ -51,6 +52,8 @@ func (t *CardChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return card.Create(stub, args)
 	case "GetByNumber":
 		return card.GetByNumber(stub, args)
+	case "GetAll":
+		return card.GetAll(stub)
 	default:
 		// Error
 		return shim.Error("Received unknown function invocation on Card Chaincode")

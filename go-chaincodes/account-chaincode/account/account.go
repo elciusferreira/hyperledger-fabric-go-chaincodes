@@ -30,27 +30,29 @@ func Init(stub shim.ChaincodeStubInterface) peer.Response {
 	fmt.Println("Transaction ID:", txID)
 
 	accounts := []Account{
-		Account{ObjectType: "Account", AccountNumber: 1, AccountBalance: 1000, AccountOwner: "Elcius"},
-		Account{ObjectType: "Account", AccountNumber: 2, AccountBalance: 1000, AccountOwner: "Natan"},
-		Account{ObjectType: "Account", AccountNumber: 3, AccountBalance: 1000, AccountOwner: "Johan"},
-		Account{ObjectType: "Account", AccountNumber: 4, AccountBalance: 1000, AccountOwner: "Leandro"},
-		Account{ObjectType: "Account", AccountNumber: 5, AccountBalance: 1000, AccountOwner: "Marcos"},
+		{ObjectType: "Account", AccountNumber: 1, AccountBalance: 1000, AccountOwner: "Elcius"},
+		{ObjectType: "Account", AccountNumber: 2, AccountBalance: 1000, AccountOwner: "Natan"},
+		{ObjectType: "Account", AccountNumber: 3, AccountBalance: 1000, AccountOwner: "Johan"},
+		{ObjectType: "Account", AccountNumber: 4, AccountBalance: 1000, AccountOwner: "Leandro"},
+		{ObjectType: "Account", AccountNumber: 5, AccountBalance: 1000, AccountOwner: "Marcos"},
 	}
 
-	i := 0
 	var err error
-	for i < len(accounts) {
+	for i := 0; i < len(accounts); i++ {
 		fmt.Println("i is ", i)
 
 		accountsAsBytes, _ := json.Marshal(accounts[i])
+
 		fmt.Println("ACC" + strconv.Itoa(i+1))
+		fmt.Println(stub.CreateCompositeKey("Account", []string{strconv.Itoa(accounts[i].AccountNumber)}))
+
 		err = stub.PutState("ACC"+strconv.Itoa(i+1), accountsAsBytes)
+
 		if err != nil {
-			return shim.Error("Error: Failed to put state of accounts: " + err.Error())
+			return shim.Error("Error inserting accounts: " + err.Error())
 		}
 
 		fmt.Println("Added", accounts[i])
-		i = i + 1
 	}
 
 	fmt.Println("-- Ending account Init")
@@ -116,6 +118,65 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	return shim.Success([]byte("Account created!"))
 }
 
+// GetAll - Get all the existing accounts
+// params: none needed
+func GetAll(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	fmt.Println("-- Starting account GetAll")
+	var err error
+
+	// Get Account state and check if it exists
+	accountsIterator, err := stub.GetStateByRange("", "")
+	if err != nil {
+		return shim.Error("GetAll: Fail to load ledger state.")
+	}
+
+	defer accountsIterator.Close()
+
+	type Record struct {
+		Key   string
+		Value string
+	}
+
+	//var records []Record
+	var list []string
+
+	if accountsIterator.HasNext() {
+		for accountsIterator.HasNext() {
+			recordData, err := accountsIterator.Next()
+			if err != nil {
+				return shim.Error("Failed to iterate through records.")
+			}
+
+			var record Record
+			record.Key = recordData.Key
+
+			if recordData.Value == nil {
+				record.Value = ""
+			} else {
+				content := string(recordData.Value[:])
+				fmt.Println("Got from ledger...")
+				fmt.Println(content)
+				//err := json.Unmarshal(recordData.Value, &content)
+				//if err != nil {
+				//	fmt.Println(err)
+				//	return shim.Error("Accounts.GetAll: Error in conversion to json")
+				//}
+
+				record.Value = content
+			}
+			list = append(list, record.Value)
+			fmt.Println("##  Account.GetAll: appending [" + record.Key + "]: " + record.Value)
+			//records = append(records, record)
+		}
+	}
+
+	fmt.Println(list)
+	fmt.Println("-- Ending account GetByNumber")
+
+	//recordsAsBytes, _ := json.Marshal(records)
+	return shim.Success([]byte("Success!"))
+}
+
 // GetByNumber - Performs a query based on Account number
 // param: AccountNumber
 func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response {
@@ -179,7 +240,7 @@ func UpdateByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Respon
 
 	// Input sanitation
 	if len(args) < 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+		return shim.Error("Error: Incorrect number of arguments. Expecting 2")
 	}
 	if args[0] == "" {
 		return shim.Error("Error: 1st argument must be a non-empty string")

@@ -8,8 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-chaincodes/utils/arg"
-
+	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
@@ -58,7 +57,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Check if account exists
 	chaincodeName := "cc-account"
-	queryArgs := arg.ToChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
+	queryArgs := util.ToChaincodeArgs("GetByNumber", strconv.Itoa(accountNumber))
 	channelName := ""
 	response := stub.InvokeChaincode(chaincodeName, queryArgs, channelName)
 	if response.Status != shim.OK {
@@ -109,4 +108,31 @@ func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response 
 
 	fmt.Println("-- Ending GetCardByNumber")
 	return shim.Success(cardAsJSON)
+}
+
+// GetAll - Get all cards in World State
+// params: none
+func GetAll(stub shim.ChaincodeStubInterface) peer.Response {
+	fmt.Println("-- Starting card: GetAll")
+
+	cardsIterator, err := stub.GetStateByRange("", "")
+	defer cardsIterator.Close()
+	if err != nil {
+		return shim.Error("Error while querying ledger. Error: " + err.Error())
+	}
+
+	var records []string
+	if cardsIterator.HasNext() {
+		for cardsIterator.HasNext() {
+			recordAsBytes, err := cardsIterator.Next()
+			if err != nil {
+				return shim.Error("Error while iterating through ledger. Error: " + err.Error())
+			}
+
+			records = append(records, string(recordAsBytes.Value))
+		}
+	}
+
+	fmt.Println(records)
+	return shim.Success([]byte("Success"))
 }

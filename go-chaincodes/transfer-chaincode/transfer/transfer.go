@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/go-chaincodes/account-chaincode/account"
-
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"

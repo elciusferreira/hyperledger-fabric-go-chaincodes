@@ -3,110 +3,153 @@ This repository presents three Hyperledger Fabric (v1.4) Chaincodes (SmartContra
 
 The account chaincode allows a simple account creation and query. The card chaincode allows a simple card creation (to an existent account) and query. The transfer chaincode allows money transfer from one account to another.
 
-<h2>Setting up the environment and deploying the network</h2>
-Hyperledger Fabric prerequisites: 
+<h2>Setting up the environment</h2>
+Install Hyperledger Fabric prerequisites (including Go): 
 
 https://hyperledger-fabric.readthedocs.io/en/latest/prereqs.html
 
-Install Fabric: 
+Install Fabric:
 
 https://hyperledger-fabric.readthedocs.io/en/latest/install.html
 
-Clone fabric-samples repo:
+Open a terminal and in root type the following commands to create the necessary directories:
 
-    git clone https://github.com/hyperledger/fabric-samples.git
+    cd ~
+    mkdir go && cd go
+    mkdir src && cd src
+    mkdir github.com && cd github.com
+    mkdir hyperledger && cd hyperledger
 
-Clone this repo:
+Now, inside the brand new hyperledger folder type the command:
+    
+    pwd
 
-    git clone https://github.com/elciusferreira/hyperledger-fabric-go-chaincodes.git
+The output should look like the path bellow:
 
-Copy go-chaincodes directory to fabric-samples/chaincode.
-Inside fabric-samples/basic-network folder edit start.sh file. In the file, go to the command:
+    /home/local/your_user_name/go/src/github.com/hyperledger
+
+Still inside hyperledger folder, clone fabric repo:
+
+    ~/go/src/github.com/hyperledger$ git clone https://github.com/hyperledger/fabric.git
+
+Return to github<!-- -->.com folder and clone my repo:
+
+    ~/go/src/github.com/hyperledger$ cd ..
+    ~/go/src/github.com$ git clone https://github.com/elciusferreira/hyperledger-fabric-go-chaincodes.git
+
+<h2>Starting the network</h2>
+Go to hyperledger-fabric-go-chaincodes/basic-network/ folder and start the network containers by running the start<!-- -->.sh scrypt:
 	
-    docker-compose -f docker-compose.yml up -d ca.example.com orderer.example.com peer0.org1.example.com couchdb
-and remove this part:
-	
-    ca.example.com orderer.example.com peer0.org1.example.com couchdb
-So, the command must be only:
-	
-    docker-compose -f docker-compose.yml up -d
-Save and close start.sh.
+    ~/go/src/github.com$ cd hyperledger-fabric-go-chaincodes/basic-network/
+    ~/go/src/github.com/hyperledger/fabric-samples/basic-network$ ./start.sh
 
-Navegate using the terminal to fabric-samples/basic-network directory and type:
-	
-    chmod +x start.sh stop.sh teardown.sh 
+Last line of output should be:
 
-Then, start the network containers:
-	
-    ./start.sh
-   Check them by typing the docker command:
+    executeJoin -> INFO 002 Successfully submitted proposal to join channel
+
+This basic-network is a simple infrastructure that consistis of one peer and one orderer. You can check the network containers (peer, ca, orderer, cli and couchdb) by typing the docker command:
 	
     docker ps
 
+<h2>Building and starting the chaincodes</h2>
 Enter in cli container:
 	
     docker exec -it cli bash
 
-Use the cli to install and instantiate the chaincodes:
+You should see the following:
+
+    root@b067b942e2e5:/opt/gopath/src/github.com/hyperledger/fabric/peer#
+
+Now, you are able to use the cli to install and instantiate the chaincodes:
 	
-    peer chaincode install -n cc-account -p github.com/go-chaincodes/account-chaincode -v v1
-    peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v1
+    ...fabric/peer# peer chaincode install -n cc-account -p github.com/hyperledger-fabric-go-chaincodes/account-chaincode -v v1
+    ...fabric/peer# peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v1
 
-	peer chaincode install -n cc-card -p github.com/go-chaincodes/card-chaincode -v v1
-    peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1
+	...fabric/peer# peer chaincode install -n cc-card -p github.com/hyperledger-fabric-go-chaincodes/card-chaincode -v v1
+    ...fabric/peer# peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1
 
-	peer chaincode install -n cc-transfer -p github.com/go-chaincodes/transfer-chaincode -v v1
-    peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-transfer -c '{"Args":["init"]}' -v v1
+	...fabric/peer# peer chaincode install -n cc-transfer -p github.com/hyperledger-fabric-go-chaincodes/transfer-chaincode -v v1
+    ...fabric/peer# peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-transfer -c '{"Args":["init"]}' -v v1
 
-<h2>Account chaincode</h2>
-To create an account:
+The peer chaincode install command sends the chaincode to the network peer. The peer chaincode instantiate command will build the go files and if there are no errors, the chaincode will be ready for use.
 
-	peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["CreateAccount","1","1000","Elcius"]}'
+<h2>Using Account chaincode</h2>
+With the account chaincode installed and instantiated you can create an account:
 
-Where the first argument is the function name, the second is the unique account number, the third is the initial account balance and the last one 	  is the account owner name.  
+	peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","1","1000","Elcius"]}'
 
-To create a predefined set of accounts:
+Where the first argument is the function name, the second is the unique account number, the third is the initial account balance and the last one is the account owner name.  
+
+Create a predefined set of accounts:
 
 	peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Init"]}'
 
-To query an account by its number:
+Query an account by its number:
 
 	peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByNumber","1"]}'
 
-To delete an account by its number:
+Celete an account by its number:
 
     peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Delete","1"]}'
 
-To get a history for an account by its number:
+Get a history for an account by its number:
 
     peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
 
+Get an account by owner name:
 
-<h2>Card chaincode</h2>
-To create a card:
+    peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetByOwner","Elcius"]}'
+
+
+
+<h2>Using Card chaincode</h2>
+With the Card chaincode installed and instantiated you can create a card:
 
 	peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["Create","10","1"]}'
 
-Where the first argument is the function name, the second is the card number and the last one is the existent account number related to the new card.
+Where the first argument is the function name, the second is the card number and the last one is the existent account number related to the card to be created.
 
-To query a card by its number:
+Query a card by its number:
 
 	peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetByNumber","10"]}'
 
-<h2>Transfer chaincode</h2>
-To transfer money from one account to another:
+<h2>Using Transfer chaincode</h2>
+With the Transfer chaincode installed and instantiated you can transfer money from one account to another:
 
 	peer chaincode invoke -C mychannel -n cc-transfer -c '{"Args":["Money","1","2","500"]}'
 
 Where the first argument is the function name, the second is the payer account number, the second is the receiver account number and the last one is the money amount to be transfered.
 
 <h2> Other instructions </h2>
-If you want to edit the code and test, you should use the cli again to install on the peer the edited chaincode and upgrade the network with the chaincode new version number. For example, if the account chaincode is modified:
+If you want to edit the code and test the changes, you should build your go files. To do that, make sure your GOPATH, GOROOT and PATH are properly set in .bashrc file. To check you can type from the root:
 
-	peer chaincode install -n cc-account -p github.com/go-chaincodes/account-chaincode -v v2
-	peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v2
+    ~$ nano ./bashrc
 
-To see the log of a chaincode, open a new terminal tab/window and type the command:
+The following lines must be somewhere in the file:
+
+    export GOPATH=/home/local/your_user_name/go/
+    export GOROOT=/usr/local/go
+    export PATH=$PATH:$GOROOT/bin
+
+To know your_user_name you can type from the root on terminal:
+
+    ~$ pwd
+
+The output should be:
+
+    /home/local/your_user_name
+
+To build the code and check if there are any errors, navegate on terminal to the modified chaincode folder and type:
+
+    ~$ cd go/src/github.com/hyperledger-fabric-go-chaincodes/account-chaincode/
+    ~/go/src/github.com/hyperledger-fabric-go-chaincodes/account-chaincode$ go build
+
+If there are no errors you can proceed and use the cli again to install the edited chaincode on the peer and upgrade the network with the chaincode new version number. For example, if the Account chaincode is modified:
+
+	...fabric/peer# peer chaincode install -n cc-account -p github.com/hyperledger-fabric-go-chaincodes/account-chaincode -v v2
+	...fabric/peer# peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v2
+
+To see the log of a chaincode (and all fmt.Println()), open a new terminal tab/window and type the command:
 
     docker logs -f <dev_container_name>
 
@@ -122,21 +165,4 @@ To shutdown the network completely, go to the fabric-samples/basic-network direc
 
     ./stop.sh
     ./teardown.sh
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

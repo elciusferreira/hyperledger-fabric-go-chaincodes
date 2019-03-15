@@ -129,7 +129,7 @@ func GetAll(stub shim.ChaincodeStubInterface) peer.Response {
 				return shim.Error("Error while iterating through ledger. Error: " + err.Error())
 			}
 
-			records = append(records, string(recordAsBytes.Value))
+			records = append(records, string(recordAsBytes.Value[:]))
 		}
 	}
 

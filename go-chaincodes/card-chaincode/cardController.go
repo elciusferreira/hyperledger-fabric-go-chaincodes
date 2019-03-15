@@ -5,10 +5,10 @@ peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -
 peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1.0.1
 
 ==== Cards ====
-+++ Invokes
+ +++ Invokes
 peer chaincode invoke -C mychannel -n cc-card -c '{"Args":["Create","10","1"]}'
 
-+++ Queries
+ +++ Queries
 peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetByNumber","10"]}'
 peer chaincode query -C mychannel -n cc-card -c '{"Args":["GetAll"]}'
 */
@@ -32,7 +32,7 @@ type CardChaincode struct {
 func main() {
 	err := shim.Start(new(CardChaincode))
 	if err != nil {
-		fmt.Printf("Erro ao iniciar Card Chaincode: %s", err)
+		fmt.Println("failed to initialize card chaincode" + err.Error())
 	}
 }
 
@@ -44,7 +44,7 @@ func (t *CardChaincode) Init(stub shim.ChaincodeStubInterface) peer.Response {
 // Invoke - Entry point for Invocations
 func (t *CardChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 	function, args := stub.GetFunctionAndParameters()
-	fmt.Println("Card Invoke is running " + function)
+	fmt.Println("[DEBUG] Card chaincode invoking " + function + " function")
 
 	// Handle different functions
 	switch function {
@@ -56,6 +56,6 @@ func (t *CardChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 		return card.GetAll(stub)
 	default:
 		// Error
-		return shim.Error("Received unknown function invocation on Card Chaincode")
+		return shim.Error("received unknown function invocation on card chaincode")
 	}
 }

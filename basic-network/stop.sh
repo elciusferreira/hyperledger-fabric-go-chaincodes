@@ -1,9 +1,8 @@
 #!/bin/bash
 #
-# Copyright IBM Corp All Rights Reserved
+# License: Apache-2.0
 #
-# SPDX-License-Identifier: Apache-2.0
-#
+
 # Exit on first error, print all commands.
 set -ev
 

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-chaincodes/query"
+	"github.com/hyperledger-fabric-go-chaincodes/query"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"
 )
@@ -42,7 +42,7 @@ func Init(stub shim.ChaincodeStubInterface) peer.Response {
 
 		fmt.Println("[DEBUG] Key: ACC" + strconv.Itoa(i+1))
 
-		err := stub.PutState("ACC" + strconv.Itoa(i+1), accountsAsBytes)
+		err := stub.PutState("ACC"+strconv.Itoa(i+1), accountsAsBytes)
 		if err != nil {
 			return shim.Error("error inserting accounts: " + err.Error())
 		}
@@ -51,7 +51,7 @@ func Init(stub shim.ChaincodeStubInterface) peer.Response {
 	}
 
 	fmt.Println("[DEBUG] end account.Init")
-    stub.SetEvent("accounts_created", []byte("Success"))
+	stub.SetEvent("accounts_created", []byte("Success"))
 	return shim.Success(nil)
 }
 
@@ -107,7 +107,7 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	// Save Account to state
-	err = stub.PutState("ACC" + accNumberAsStr, accountJSONasBytes)
+	err = stub.PutState("ACC"+accNumberAsStr, accountJSONasBytes)
 	if err != nil {
 		return shim.Error("failed to put state of account: " + err.Error())
 	}
@@ -273,7 +273,7 @@ func Update(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 
 	// Update (rewrite) Account
 	accNumber := strconv.Itoa(accObject.AccountNumber)
-	err = stub.PutState("ACC" + accNumber, []byte(accAsString))
+	err = stub.PutState("ACC"+accNumber, []byte(accAsString))
 	if err != nil {
 		return shim.Error("failed to update ACC" + accNumber + ": " + err.Error())
 	}

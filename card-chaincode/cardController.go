@@ -1,8 +1,8 @@
 /*
 ==== Install/Instantiate/Upgrade
-peer chaincode install -n cc-card -p github.com/go-chaincodes/card-chaincode -v v1.0.0
-peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1.0.0
-peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1.0.1
+peer chaincode install -n cc-card -p github.com/hyperledger-fabric-go-chaincodes/card-chaincode -v v1
+peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v1
+peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-card -c '{"Args":["init"]}' -v v2
 
 ==== Cards ====
  +++ Invokes
@@ -18,7 +18,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/go-chaincodes/card-chaincode/card"
+	"github.com/hyperledger-fabric-go-chaincodes/card-chaincode/card"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/hyperledger/fabric/protos/peer"

@@ -4,6 +4,7 @@ Package account provides services in the context of account asset.
 package account
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -50,8 +51,11 @@ func Init(stub shim.ChaincodeStubInterface) peer.Response {
 		fmt.Println("[DEBUG] Added: ", accounts[i])
 	}
 
+	err := stub.SetEvent("accounts_created", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `accounts_created`: " + err.Error())
+	}
 	fmt.Println("[DEBUG] end account.Init")
-	stub.SetEvent("accounts_created", []byte("Success"))
 	return shim.Success(nil)
 }
 
@@ -113,8 +117,11 @@ func Create(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	}
 
 	// Account saved and indexed. Return success
+	err = stub.SetEvent("account_created", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `account_created`: " + err.Error())
+	}
 	fmt.Println("[DEBUG] end account.Create")
-	//return shim.Success([]byte("Account created!"))
 	return shim.Success(nil)
 }
 
@@ -138,7 +145,12 @@ func GetAll(stub shim.ChaincodeStubInterface) peer.Response {
 	}
 
 	fmt.Println("[DEBUG] queryResults: " + string(queryResults[:]))
-	fmt.Println("[DEBUG] end account.GetByNumber")
+
+	err = stub.SetEvent("get_all_accounts", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `get_all_accounts`: " + err.Error())
+	}
+	fmt.Println("[DEBUG] end account.GetAll")
 	return shim.Success(queryResults)
 }
 
@@ -170,6 +182,10 @@ func GetByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response 
 		return shim.Error("account ACC" + accNumber + " does not exist")
 	}
 
+	err = stub.SetEvent("get_account_by_number", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `get_account_by_number`: " + err.Error())
+	}
 	fmt.Println("[DEBUG] end account.GetByNumber")
 	return shim.Success(accountAsBytes)
 }
@@ -199,53 +215,13 @@ func GetByOwner(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error("cannot get query results: " + err.Error())
 	}
 
+	err = stub.SetEvent("get_account_by_owner", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `get_account_by_owner`: " + err.Error())
+	}
 	fmt.Println("[DEBUG] end account.GetByOwner")
 	return shim.Success(queryResults)
 }
-
-/* DEPRECATED
-// UpdateByNumber - Updates (rewrites) an account
-// param: AccountID, Account as bytes
-func UpdateByNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response {
-	fmt.Println("[DEBUG] begin account.UpdateByNumber")
-	var err error
-
-	// Input sanitation
-	if len(args) != 2 {
-		return shim.Error("incorrect number of arguments. 2 expected")
-	}
-	if args[0] == "" {
-		return shim.Error("1st argument must be a non-empty string")
-	}
-	if args[1] == "" {
-		return shim.Error("2nd argument must be a non-empty string")
-	}
-	_, err = strconv.Atoi(args[0])
-	if err != nil {
-		return shim.Error("1st argument must be a numeric string")
-	}
-
-	// Mapping arg to variable
-	accNumber := args[0]
-	accAsString := args[1]
-
-	// Validating account input
-	var inputAcc Account
-	err = json.Unmarshal([]byte(accAsString), &inputAcc)
-	if err != nil {
-		return shim.Error("account not valid as json: " + err.Error())
-	}
-
-	// Update (rewrite) Account
-	err = stub.PutState("ACC" + accNumber, []byte(accAsString))
-	if err != nil {
-		return shim.Error("failed to update ACC" + accNumber + ": " + err.Error())
-	}
-
-	fmt.Println("[DEBUG] end account.UpdateByNumber")
-	return shim.Success([]byte("Account updated"))
-}
-*/
 
 // Update - Updates (rewrites) an account
 // param: Account JSON as bytes
@@ -278,6 +254,10 @@ func Update(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error("failed to update ACC" + accNumber + ": " + err.Error())
 	}
 
+	err = stub.SetEvent("update_account", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `update_account`: " + err.Error())
+	}
 	fmt.Println("[DEBUG] end account.Update")
 	return shim.Success(nil)
 }
@@ -315,6 +295,10 @@ func Delete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 		return shim.Error("failed to delete state: " + err.Error())
 	}
 
+	err = stub.SetEvent("delete_account", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `delete_account`: " + err.Error())
+	}
 	fmt.Println("[DEBUG] end account.Delete")
 	return shim.Success(nil)
 }
@@ -323,8 +307,8 @@ func Delete(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 // param: AccountNumber
 func GetHistoryByAccNumber(stub shim.ChaincodeStubInterface, args []string) peer.Response {
 	fmt.Println("[DEBUG] begin account.GetHistory")
-
 	var err error
+	var b bytes.Buffer
 
 	// Input sanitation
 	if len(args) != 1 {
@@ -338,25 +322,18 @@ func GetHistoryByAccNumber(stub shim.ChaincodeStubInterface, args []string) peer
 	// Mapping arg to variable
 	accNumber := args[0]
 
-	// Auxiliary struct
-	type AuditHistory struct {
-		TxID      string  `json:"TxID"`
-		Value     Account `json:"Value"`
-		IsDeleted bool    `json:"IsDeleted"`
-	}
-
-	// Store all transactions ID and account states
-	var history []AuditHistory
-	var account Account
-
-	// Get History
+	// Get History iterator
 	resultsIterator, err := stub.GetHistoryForKey("ACC" + accNumber)
 	if err != nil {
 		return shim.Error("failed to fetch asset history: " + err.Error())
 	}
 	defer resultsIterator.Close()
 
+	bArrayMemberAlreadyWritten := false
+
 	if resultsIterator.HasNext() {
+		b.WriteString("[")
+
 		// Itarate over results
 		for resultsIterator.HasNext() {
 			historyData, err := resultsIterator.Next()
@@ -364,34 +341,41 @@ func GetHistoryByAccNumber(stub shim.ChaincodeStubInterface, args []string) peer
 				return shim.Error("failed to iterate over results: " + err.Error())
 			}
 
-			// Copy transaction id over
-			var tx AuditHistory
-			tx.TxID = historyData.TxId
+			// Add a comma before array members, suppress it for the first array member
+			if bArrayMemberAlreadyWritten == true {
+				b.WriteString(",")
+			}
+
+			b.WriteString("{\"TxID\":")
+			b.WriteString("\"")
+			b.WriteString(historyData.TxId)
+			b.WriteString("\"")
+			b.WriteString(", \"Value\":")
 
 			// Check if account has been deleted
 			if historyData.Value == nil {
-				var emptyAccount Account
-				// Copy nil account
-				tx.Value = emptyAccount
-				tx.IsDeleted = true
+				b.WriteString("{}")
+				b.WriteString(", \"IsDeleted\":")
+				b.WriteString("true")
+				b.WriteString("}")
 			} else {
-				// Parse asset value to account object
-				json.Unmarshal(historyData.Value, &account)
-
-				// Copy account
-				tx.Value = account
-				tx.IsDeleted = false
+				b.Write(historyData.Value)
+				b.WriteString(", \"IsDeleted\":")
+				b.WriteString("false")
+				b.WriteString("}")
 			}
-			// Add transaction (txID and account state or value) to the list
-			history = append(history, tx)
+			bArrayMemberAlreadyWritten = true
 		}
+
+		b.WriteString("]")
 	} else {
 		return shim.Error("cannot find account history. ACC" + accNumber + " does not exist")
 	}
 
-	// Parse history list to array of bytes
-	historyAsBytes, _ := json.Marshal(history)
-
+	err = stub.SetEvent("get_history", []byte("Success"))
+	if err != nil {
+		fmt.Println("[WARN] failed to set event `get_history`: " + err.Error())
+	}
 	fmt.Printf("[DEBUG] end account.GetHistory")
-	return shim.Success(historyAsBytes)
+	return shim.Success(b.Bytes())
 }

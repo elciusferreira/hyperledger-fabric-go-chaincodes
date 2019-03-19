@@ -13,6 +13,7 @@ peer chaincode list --instantiated -C mychannel
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Init"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","1","1000","Elcius"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","2","1000","Natan"]}'
+peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Create","6","1000","Marcelo"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Delete","1"]}'
 peer chaincode invoke -C mychannel -n cc-account -c '{"Args":["Update","{\"accountBalance\":7000,\"accountNumber\":2,\"accountOwner\":\"Natanael\",\"docType\":\"Account\"}"]}'
 
@@ -70,8 +71,6 @@ func (t *AccountsChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Respon
 		return account.GetByOwner(stub, args)
 	case "Update":
 		return account.Update(stub, args)
-	//case "UpdateByNumber":
-	//	return account.UpdateByNumber(stub, args)
 	case "Delete":
 		return account.Delete(stub, args)
 	case "GetHistory":

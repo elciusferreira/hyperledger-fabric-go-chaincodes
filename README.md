@@ -1,4 +1,4 @@
-# Hyperledger Fabric Chaincode with Go
+# Hyperledger Fabric Go Chaincodes
 
 This repository presents three Hyperledger Fabric (v1.4) Chaincodes (SmartContracts) written using Go: account, card and transfer.
 

@@ -92,7 +92,7 @@ The peer chaincode install command sends the chaincode to the network peer. The 
 
 - - -
 
-## Calling Chaincodes
+## Using Chaincodes
 
 Now that everything is configured and the chaincodes are installed and instantiated, you can call the chaincodes to execute operations.
 

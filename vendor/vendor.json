@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "y9w6uUS/8l+DNnkNFQ39Z4gMS2I=",
+			"path": "github.com/hyperledger-fabric-go-chaincodes/query",
+			"revision": "02da1c7e54caeafa6b6ed73650a6e095e2fe4803",
+			"revisionTime": "2019-03-19T16:51:40Z"
+		}
+	],
+	"rootPath": "github.com/hyperledger-fabric-go-chaincodes"
+}

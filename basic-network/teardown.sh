@@ -7,9 +7,10 @@
 set -ev
 
 # Shut down the Docker containers for the system tests.
-docker-compose -f docker-compose.yml kill && docker-compose -f docker-compose.yml down
+docker-compose -f docker-compose.yml kill && docker-compose -f docker-compose.yml down || true
 
-# remove all remaining containers
+# kill and remove all containers
+docker kill $(docker ps -aq) || true
 docker rm $(docker ps -aq) || true
 
 # remove all volumes

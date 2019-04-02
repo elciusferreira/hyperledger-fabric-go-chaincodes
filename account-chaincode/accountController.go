@@ -1,8 +1,8 @@
 /*
 ==== Install/Instantiate/Upgrade
 peer chaincode install -n cc-account -p github.com/hyperledger-fabric-go-chaincodes/account-chaincode -v v1
-peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v1
-peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["init"]}' -v v2
+peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["debug"]}' -v v1
+peer chaincode upgrade -o orderer.example.com:7050 -C mychannel -n cc-account -c '{"Args":["debug"]}' -v v2
 
 ==== List chaincodes ====
 peer chaincode list --installed
@@ -27,7 +27,7 @@ peer chaincode query -C mychannel -n cc-account -c '{"Args":["GetHistory","1"]}'
 package main
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/hyperledger-fabric-go-chaincodes/account-chaincode/account"
 
@@ -39,44 +39,86 @@ import (
 type AccountsChaincode struct {
 }
 
+// Logger
+var logger = shim.NewLogger("cc-account")
+
 // Main
 func main() {
 	err := shim.Start(new(AccountsChaincode))
 	if err != nil {
-		fmt.Println("failed to initialize accounts chaincode" + err.Error())
+		logger.SetLevel(shim.LogCritical)
+		logger.Critical("Failed to initialize accounts chaincode: " + err.Error())
 	}
 }
 
 // Init - initializes chaincode
 func (t *AccountsChaincode) Init(stub shim.ChaincodeStubInterface) peer.Response {
+	args := stub.GetStringArgs()
+	var logLevel string
+
+	// Input sanitation
+	if len(args) > 1 {
+		return shim.Error("Incorrect number of arguments. None or 1 expected")
+	}
+
+	// Input Mapping
+	if len(args) == 1 {
+		logLevel = strings.ToUpper(args[0])
+	}
+
+	// Selecting log level
+	switch logLevel {
+	case "DEBUG":
+		logger.SetLevel(shim.LogDebug)
+	case "INFO":
+		logger.SetLevel(shim.LogInfo)
+	case "NOTICE":
+		logger.SetLevel(shim.LogNotice)
+	case "WARNING":
+		logger.SetLevel(shim.LogWarning)
+	case "ERROR":
+		logger.SetLevel(shim.LogError)
+	case "CRITICAL":
+		logger.SetLevel(shim.LogCritical)
+	default:
+		logger.SetLevel(shim.LogInfo)
+		logger.Warning("Level \"" + logLevel + "\" not recognized as valid log level")
+		logger.Notice("Using default logger level \"INFO\"")
+	}
+
+	logger.Info("Initialized `cc-account` chaincode")
 	return shim.Success(nil)
 }
 
 // Invoke - Entry point for Invocations
 func (t *AccountsChaincode) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
 	function, args := stub.GetFunctionAndParameters()
-	fmt.Println("[DEBUG] Accounts chaincode invoking " + function + " function")
+
+	// Configuring logger
+	// logger.SetLevel(shim.LogDebug)
+	logger.Info("Chaincode invoke: function:\"" + function + "\"")
 
 	// Handle different functions
 	switch function {
 	case "Init":
-		return account.Init(stub)
+		return account.Init(stub, logger)
 	case "Create":
-		return account.Create(stub, args)
+		return account.Create(stub, logger, args)
 	case "GetAll":
-		return account.GetAll(stub)
+		return account.GetAll(stub, logger)
 	case "GetByNumber":
-		return account.GetByNumber(stub, args)
+		return account.GetByNumber(stub, logger, args)
 	case "GetByOwner":
-		return account.GetByOwner(stub, args)
+		return account.GetByOwner(stub, logger, args)
 	case "Update":
-		return account.Update(stub, args)
+		return account.Update(stub, logger, args)
 	case "Delete":
-		return account.Delete(stub, args)
+		return account.Delete(stub, logger, args)
 	case "GetHistory":
-		return account.GetHistoryByAccNumber(stub, args)
+		return account.GetHistoryByAccNumber(stub, logger, args)
 	default:
 		// Error
-		return shim.Error("received unknown function invocation on account chaincode")
+		logger.Error("Received unknown function invoke: \"" + function + "\"")
+		return shim.Error("Received unknown function invoke: \"" + function + "\"")
 	}
 }
